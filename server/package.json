@@ -1,0 +1,14 @@
+{
+	"name": "tc5550-3dshooter",
+	"version": "1.0.0",
+	"description": "CSS 3D multiplayer shooter",
+	"author": "Alfons Nilsson",
+	"license": "MIT",
+	"dependencies": {
+		"node": "8.9.x",
+		"websocket": "^1.0.28"
+	},
+	"scripts": {
+		"start": "node server.js"
+	}
+}
