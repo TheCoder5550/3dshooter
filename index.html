@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D Shooter</title>
+
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="HandheldFriendly" content="true" />
+
+    <script src="https://aaserver.net/libraries/simpleFPS/simpleFPS.js"></script>
+    <script src='main.js'></script>
+
+    <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100" rel="stylesheet">
+
+    <style>
+
+        :root {
+            font-family: 'Oswald', sans-serif;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        body {
+            position: fixed;
+            background: rgb(166, 175, 190);
+        }
+    
+        .scene {
+            width: 100vw;
+            height: 100vh;
+            perspective:  600px;
+            transform-style: preserve-3d;
+            perspective-origin: 50% 50%;
+            
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        plane {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+        }
+
+        .floor {
+            background-size: 600px;
+        }
+
+        .cornerShadow {
+            box-shadow: inset 0 0 100px rgb(0, 0, 0);
+        }
+
+        .bullethole {
+            background-size: 25px;
+        }
+
+        .hand {
+            position: fixed;
+            width: 400px;
+            height: 512px;
+            background: url('./assets/handSprite.png') no-repeat;
+            background-size: 2000px;
+            background-position-x: 0;
+            right: 0;
+            bottom: 0;
+        }
+
+        .playerHead {
+            background-size: 75px;
+        }
+
+        #titleDiv {
+            position: fixed;
+            top: 0;
+            left: 0;
+            color: white;
+            padding: 50px;
+        }
+
+        #titleDiv p {
+            padding: 0;
+            margin: 0;
+        }
+
+        #titleDiv a {
+            text-decoration: none;
+            color: white;
+        }
+
+        #titleDiv a:hover:before {
+            content: ">  ";
+        }
+
+        .crosshair, .hitmark {
+            font-family: 'Roboto', sans-serif;
+            
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-size: 75px;
+            pointer-events: none;
+        }
+
+        .hitmark {
+            visibility: hidden;
+            color: white;
+        }
+
+        .blood {
+            width: 100vw;
+            height: 100vh;
+
+            position: fixed;
+            top: 0;
+            left: 0;
+
+            background: radial-gradient(rgba(0, 0, 0, 0), red);
+            pointer-events: none;
+
+            visibility: hidden;
+        }
+
+        #fps {
+            position: fixed;
+            top: 0;
+            left: 0;
+            color: rgb(83, 255, 83);
+            font-size: 25px;
+        }
+
+        .UI {
+            position: fixed;
+            z-index: 10;
+            visibility: hidden;
+        }
+
+        #healthbar {
+            position: relative;
+            bottom: 75px;
+            left: 25px;
+            width: 200px;
+            height: 25px;
+            background: red;
+        }
+
+        #healthbar::after {
+            content: '';
+            position: absolute;
+            z-index: -1;
+            top: 0;
+            left: 0;
+            background: darkred;
+            width: 200px;
+            height: 25px;
+            display: flex;
+        }
+
+        #blackscreen {
+            width: 100vw;
+            height: 100vh;
+            background: black;
+            position: fixed;
+            top: 0;
+            left: 0;
+            visibility: hidden;
+        }
+    
+    </style>
+</head>
+<body>
+    <div class="scene" id="scene"></div>
+    <div id="titleDiv">
+        <p style="font-size: 75px; text-decoration: underline;">3D Shooter Demo</p>
+        <p style="font-size: 50px"><a href="#" onclick="joinGame()" id="joinGame">Join match</a></p>
+    </div>
+    <span id="fps">FPS</span>
+    <div class="UI" id="UI">
+        <div class="hand" id="hand"></div>
+        <div class="crosshair">+</div>
+        <div class="hitmark" id="hitmark">X</div>
+        <div class="blood" id="blood"></div>
+        <div id="healthbar"></div>
+        <div id="blackscreen"></div>
+    </div>
+</body>
+</html>
