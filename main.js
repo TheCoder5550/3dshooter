@@ -2,7 +2,7 @@
 
 var camera = {x: 0, y: 0, z: 0};
 var cameraRot = {x: 0, y: 0, z: 0};
-var player = {x: Math.random() * 5000 - 2500, y: 0, z: Math.random() * 5000 - 2500, vx: 0, vy: 0, vz: 0, speed: 10, speedChange: 0, rotY: 0, health: 100, isDead: false};
+var player = {x: Math.random() * 5000 - 2500, y: 0, z: Math.random() * 5000 - 2500, vx: 0, vy: 0, vz: 0, speed: 10, speedChange: 0, rotY: 0, health: 100, isDead: false, name: "UNKNOWN"};
 var inGame = false;
 var myId = Math.round(Math.random() * 100000);
 var bullets = [];
@@ -28,7 +28,9 @@ var t = 0;
 
 var simpleFPS;
 var scene;
+var camera;
 var titleDiv;
+var playerName;
 var joinGameButton;
 var hand;
 var hitmark;
@@ -46,7 +48,9 @@ var hitSoundEffect = new Audio();
 window.onload = function() {
     simpleFPS = new SimpleFPS(false);
     scene = document.getElementById("scene");
+    camera = document.getElementById("camera");
     titleDiv = document.getElementById("titleDiv");
+    playerName = document.getElementById("playerName");
     joinGameButton = document.getElementById("joinGame");
     hand = document.getElementById("hand");
     hitmark = document.getElementById("hitmark");
@@ -75,6 +79,17 @@ window.onload = function() {
             for (var i = 0; i < bullets.length; i++) {
                 bullets[i].run();
             }
+
+            for (var i = 0; i < planes.length; i++) {
+                var p = planes[i];
+                if (p.pos != p.lastPos || p.rot != p.lastRot) {
+                    p.element.style.transform = "translate3d(" + p.pos.x + "px," + p.pos.y + "px," + p.pos.z + "px)" +
+                                                "rotateX(" + p.rot.x + "deg) rotateY(" + p.rot.y + "deg) rotateZ(" + p.rot.z + "deg)";
+                    
+                    p.lastPos = Object.assign({}, p.pos);
+                    p.lastRot = Object.assign({}, p.rot);
+                }
+            }
         }
         else {
             camera.x = Math.cos(t / 200) * 1500;
@@ -84,7 +99,7 @@ window.onload = function() {
             cameraRot.x = -25;
         }
 
-        updatePlaneTransform();
+        updateCameraTransform();
 
         t++;
         simpleFPS.update();
@@ -198,10 +213,16 @@ function joinGame() {
         titleDiv.style.visibility = "hidden";
         ui.style.visibility = "visible";
         inGame = true;
+        player.name = playerName.value || ("UNKNOWN" + Math.round(Math.random() * 1000));
 
         setInterval(function() {
             mainSocket.send(JSON.stringify({type: "updateplayer", playerData: player, id: myId}));
         }, 50);
+    }
+
+    mainSocket.onclose = function() {
+        alert("Lost connection!");
+        location.reload();
     }
 
     mainSocket.onmessage = function(e) {
@@ -210,14 +231,16 @@ function joinGame() {
             for (var i = 0; i < msg.data.length; i++) {
                 var d = msg.data[i];
 
-                var found = remotePlayers.find(function(t) {
-                    return t.data.ownData.id == d.ownData.id;
-                });
-                if (found) {
-                    found.updateData(d);
-                }
-                else {
-                    remotePlayers.push(new RemotePlayer(d));
+                if (d && d.ownData) {
+                    var found = remotePlayers.find(function(t) {
+                        return t.data.ownData.id == d.ownData.id;
+                    });
+                    if (found) {
+                        found.updateData(d);
+                    }
+                    else {
+                        remotePlayers.push(new RemotePlayer(d));
+                    }
                 }
             }
 
@@ -245,6 +268,17 @@ function joinGame() {
                     player.y = 100;
                 }, 3000);
             } 
+        }
+        else if (msg.type == "playerleft") {
+            for (var i = 0; i < remotePlayers.length; i++) {
+                var p = remotePlayers[i];
+                if (p.data.ownData.id == msg.id) {
+                    for (var j = 0; j < p.planes.length; j++) {
+                        removePlane(planes.indexOf(p.planes[j].plane));
+                    }
+                    remotePlayers.splice(i, 1);
+                }
+            }
         }
     }
 }
@@ -348,6 +382,7 @@ function RemotePlayer(data) {
 
     this.planes = [];
     if (this.data.ownData.id != myId) {
+        createPlane({x: 0, y: -75, z: 0}, {x: 250, y: 50}, {x: 0, y: 180, z: 0}, "none", false, "nametag");
         createCube({x: 0, y: 0, z: 0}, {x: 75, y: 75, z: 75}, "url('./assets/placeholder.jpg')", true, "playerHead");
         createCube({x: 0, y: 75 + 37.5, z: 0}, {x: 75, y: 150, z: 50}, "rgb(141, 123, 99)", true);
         createCube({x: 50, y: 50 + 37.5, z: 0}, {x: 40, y: 100, z: 40}, "rgb(94, 81, 66)", true);
@@ -359,7 +394,7 @@ function RemotePlayer(data) {
         this.headCollisionBox = headCollisionBoxes[headCollisionBoxes.length - 1];
         this.bodyCollisionBox = bodyCollisionBoxes[bodyCollisionBoxes.length - 1];
 
-        for (var i = 0; i < 24; i++) {
+        for (var i = 0; i < 25; i++) {
             var p = planes[planes.length - 1 - i];
             this.planes.push({startdist: Math.sqrt(p.pos.x * p.pos.x + p.pos.z * p.pos.z),
                             startangle: Math.atan2(p.pos.z, p.pos.x),
@@ -371,6 +406,8 @@ function RemotePlayer(data) {
 
     this.updateData = function(data) {
         this.data = data;
+        if (this.planes[24])
+            this.planes[24].plane.element.innerHTML = this.data.ownData.playerData.name;
     }
 
     this.run = function() {
@@ -401,15 +438,10 @@ function RemotePlayer(data) {
     }
 }
 
-function updatePlaneTransform() {
-    for (var i = 0; i < planes.length; i++) {
-        var p = planes[i];
-
-        p.element.style.transform = "translateZ(600px)" +
-                                    "rotateX(" + cameraRot.x + "deg) rotateY(" + cameraRot.y + "deg) rotateZ(" + cameraRot.z + "deg)" +
-                                    "translate3d(" + (camera.x + p.pos.x) + "px," + (camera.y + p.pos.y) + "px," + (camera.z + p.pos.z) + "px)" +
-                                    "rotateX(" + p.rot.x + "deg) rotateY(" + p.rot.y + "deg) rotateZ(" + p.rot.z + "deg)";
-    }
+function updateCameraTransform() {
+    camera.style.transform = "translateZ(600px)" +
+                             "rotateX(" + cameraRot.x + "deg) rotateY(" + cameraRot.y + "deg) rotateZ(" + cameraRot.z + "deg)" +
+                             "translate3d(" + (camera.x) + "px," + (camera.y) + "px," + (camera.z) + "px)";
 }
 
 function shadePlanes() {
@@ -502,12 +534,15 @@ function createPlane(pos, size, rot, background, isAffectedByLight, customClass)
     if (customClass)
         p.classList.add(customClass);
 
-    scene.appendChild(p);
-    planes.push({element: p, pos: pos, rot: rot, isAffectedByLight: typeof isAffectedByLight == "undefined" ? true : isAffectedByLight});
+    p.style.transform = "translate3d(" + (pos.x) + "px," + (pos.y) + "px," + (pos.z) + "px)" +
+                        "rotateX(" + rot.x + "deg) rotateY(" + rot.y + "deg) rotateZ(" + rot.z + "deg)";
+
+    camera.appendChild(p);
+    planes.push({element: p, pos: pos, rot: rot, lastPos: Object.assign({}, pos), lastRot: Object.assign({}, rot), isAffectedByLight: typeof isAffectedByLight == "undefined" ? true : isAffectedByLight});
 }
 
 function removePlane(planeIndex) {
-    scene.removeChild(planes[planeIndex].element);
+    camera.removeChild(planes[planeIndex].element);
     planes.splice(planeIndex, 1);
 }
 

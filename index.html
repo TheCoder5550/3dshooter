@@ -35,6 +35,11 @@
             width: 100vw;
             height: 100vh;
             perspective:  600px;
+        }
+
+        .camera {
+            width: 100vw;
+            height: 100vh;
             transform-style: preserve-3d;
             perspective-origin: 50% 50%;
             
@@ -77,12 +82,28 @@
             background-size: 75px;
         }
 
+        .nametag {
+            font-size: 50px;
+        }
+
         #titleDiv {
             position: fixed;
             top: 0;
             left: 0;
             color: white;
             padding: 50px;
+        }
+
+        input {
+            font-family: 'Oswald', sans-serif;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 50px;
+        }
+
+        input::placeholder {
+            color: white;
         }
 
         #titleDiv p {
@@ -183,10 +204,16 @@
     </style>
 </head>
 <body>
-    <div class="scene" id="scene"></div>
+    <div class="scene" id="scene">
+        <div class="camera" id="camera">
+
+        </div>
+    </div>
     <div id="titleDiv">
         <p style="font-size: 75px; text-decoration: underline;">3D Shooter Demo</p>
         <p style="font-size: 50px"><a href="#" onclick="joinGame()" id="joinGame">Join match</a></p>
+        <p style="font-size: 50px"><input type="text" placeholder="Player name" id="playerName"></input></p>
+        <p style="font-size: 15px; text-decoration: underline;">NOTE: This game is unmoderated</p>
     </div>
     <span id="fps">FPS</span>
     <div class="UI" id="UI">
