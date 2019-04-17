@@ -34,19 +34,24 @@ wss.on('request', function (request) {
                     }
                 }
 
-                //Get players
-                var d = [];
-                for (var i = 0; i < clients.length; i++) {
-                    var c = clients[i];
-                    if (c.isOnline)
-                        d.push({ ownData: c.ownData });
+                if (data.playerData && (data.playerData.health > 100 || data.playerData.speed > 25)) {
+                    connection.close();
                 }
-                connection.sendUTF(JSON.stringify({ data: d, type: "updateplayers" }));
+                else {
+                    //Get players
+                    var d = [];
+                    for (var i = 0; i < clients.length; i++) {
+                        var c = clients[i];
+                        if (c.isOnline)
+                            d.push({ ownData: c.ownData });
+                    }
+                    connection.sendUTF(JSON.stringify({ data: d, type: "updateplayers" }));
+                }
             }
             else if (data.type == "damageplayer") {
                 for (var i = 0; i < clients.length; i++) {
                     var c = clients[i];
-                    if (c.ownData.id == data.id)
+                    if (c.ownData && c.ownData.id == data.id)
                         c.sendUTF(JSON.stringify({ damageTaken: data.damage, type: "hit" }));
                 }
             }
@@ -55,6 +60,11 @@ wss.on('request', function (request) {
 
     connection.on('close', function (connection) {
         console.log("User left!");
+        var id = clients[clientIndex].ownData && clients[clientIndex].ownData.id;
+        for (var i = 0; i < clients.length; i++) {
+            var c = clients[i];
+            c.sendUTF(JSON.stringify({ id: id, type: "playerleft" }));
+        }
         clients[clientIndex].isOnline = false;
     });
 });
