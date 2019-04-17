@@ -273,6 +273,8 @@ function joinGame() {
             for (var i = 0; i < remotePlayers.length; i++) {
                 var p = remotePlayers[i];
                 if (p.data.ownData.id == msg.id) {
+                    headCollisionBoxes.splice(headCollisionBoxes.indexOf(p.headCollisionBox));
+                    bodyCollisionBoxes.splice(bodyCollisionBoxes.indexOf(p.bodyCollisionBox));
                     for (var j = 0; j < p.planes.length; j++) {
                         removePlane(planes.indexOf(p.planes[j].plane));
                     }
